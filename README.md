@@ -37,8 +37,8 @@ python tmdb_crawler.py -t TMDB_API_TOKEN ./data/movie_ids_small.json.gz
 - [ ] Create crawler service 
   - [x] Read compressed file
   - [x] Extract IDs
-  - [ ] Request details
-  - [ ] Print content to file
+  - [x] Request details
+  - [ ] Append content to file
   - [ ] Compress output file
   - [ ] [Optional] Accept output path and name 
 - [ ] Improve embedding module
