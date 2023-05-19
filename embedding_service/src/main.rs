@@ -1,56 +1,36 @@
-use rust_bert::pipelines::sentence_embeddings::{SentenceEmbeddingsBuilder, SentenceEmbeddingsModelType};
-use serde::Deserialize;
-use std::fs;
+use axum::{routing::get, Router};
 
-#[derive(Debug, Deserialize)]
-pub struct Books {
-    pub books: Vec<Book>,
-}
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Book {
-    pub title: String,
-    pub author: String,
-    pub summary: String,
-}
+use tower_http::trace::{self, TraceLayer};
+use tracing::Level;
 
-impl Book {
-    fn to_embedded(self, embeddings: [f32; 384]) -> EmbeddedBook {
-        EmbeddedBook {
-            title: Some(self.title),
-            author: Some(self.author),
-            summary: Some(self.summary),
-            embeddings,
-        }
-    }
-}
+use std::net::SocketAddr;
 
-#[derive(Debug)]
-pub struct EmbeddedBook {
-    pub title: Option<String>,
+mod api;
+mod model;
 
-    pub author: Option<String>,
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
 
-    pub summary: Option<String>,
+    let (_handle, model) = model::Model::spawn();
 
-    pub embeddings: [f32; 384],
-}
+    let app = Router::new()
+        .route(api::text::ENDPOINT, get(api::text::text))
+        .with_state(model)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+        );
 
-fn main() -> anyhow::Result<()> {
-    let model = SentenceEmbeddingsBuilder::remote(SentenceEmbeddingsModelType::AllMiniLmL12V2).create_model()?;
-
-    let json = fs::read_to_string("data/books.json")?;
-    let library: Books = serde_json::from_str(&json)?;
-
-    for book in library.books.clone() {
-        let embeddings = model.encode(&[book.clone().summary])?;
-		let embedded = book.to_embedded(to_array(embeddings[0].as_slice()));
-		println!("{:?} : {:?}", embedded.title, embedded.embeddings)
-    }
-
-    Ok(())
-}
-
-fn to_array(barry: &[f32]) -> [f32; 384] {
-    barry.try_into().expect("slice with incorrect length")
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000)); // TODO specify port on env
+    tracing::info!("Listening on {addr}");
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
