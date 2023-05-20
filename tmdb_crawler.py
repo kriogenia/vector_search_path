@@ -7,7 +7,7 @@ import time
 
 parser = argparse.ArgumentParser(
     prog='TMDB Crawler',
-    description='Tool to automatically query TMDB API /movies to populate with data the provided list'
+    description='Tool to automatically query TMDB API /movies to populate with data the provided list and transform it to the format accepted by the Index API'
 )
 
 parser.add_argument('-t', '--token',
@@ -76,9 +76,11 @@ if output_path == None:
     output_path = f'./data/tmdb_{filename[:-3]}'
 output_file = gzip.open(output_path, 'wb') if args.zip else open(output_path, 'w')
 
-process = lambda a : a + '\n'
+process = lambda a : a
 if args.zip:
-    process = lambda a: bytes(a + '\n', 'utf-8') # gzip writting requires bytes
+    process = lambda a: bytes(a, 'utf-8') # gzip writting requires bytes
+
+get_id = lambda line : line[20:].split(',', 1)[0]
 
 
 MIN_WAIT = 1.0 / 40.0   # max of 40 requests per second
@@ -87,17 +89,22 @@ last_request_instant = start_time
 
 print('>> Requesting details of movies in the input file')
 with gzip.open(args.file, 'rt') as file, output_file:
+    first_id = get_id(file.readline())
+    first_details = request_movie_details(first_id)
+    output_file.write(process('{"docs":[' + first_details))
+    
     for line in file:
         ellapsed = time.time() - last_request_instant
         if ellapsed < MIN_WAIT:
             time.sleep(MIN_WAIT - ellapsed)
         last_request_instant = time.time()
 
-        id = line[20:].split(',', 1)[0]
+        id = get_id(line)
         details = request_movie_details(id)
 
-        output_file.write(process(details))
+        output_file.write(process(',' + details))
         counter += 1
+    output_file.write(process(']}'))
 print(
     f'>> Finishing movie population, requested {counter} lines in {time.time() - start_time:.0f} s')
 
