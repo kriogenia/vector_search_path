@@ -37,6 +37,8 @@ python tmdb_crawler.py -t TMDB_API_TOKEN ./data/movie_ids_small.json.gz
 
 TODO. if it's only a single `docker-compose up` it would be perfect.
 
+Launch the `vectorize_service` -> `docker run -p 3000:3000`
+
 ### Building the index
 
 TODO. curl the index, explain what happens
@@ -53,9 +55,18 @@ TODO. curl the index, explain what happens
 - [ ] Create index service
   - [ ] POST /index -> docs
   - [ ] Kafka producer to "docs" topic
-- [ ] Improve embedding module
-  - [ ] Read the docs from Kafka topic "docs"
-  - [ ] Send the embedded docs to Kafka topic "embedded"
+- [ ] Create index_embedding_stream
+  - [ ] Kafka stream from "docs" topic to "embedded_docs" topic
+  - [ ] Encodes descriptions
+- [ ] Embedding service
+  - [ ] Dockerfile
+  - [ ] Add image encoding
+  - [ ] Create REST API
+    - [x] GET /text/:text_to_embed 
+    - [ ] [Optional] POST /text
+  - [ ] [Optional] Configurable through ENV
+  - [ ] Tests
+  - [ ] [Optional] Check axum examples for improvements, f.e. transform path error
 - [ ] Create embedded consumer
   - [ ] Kafka consumer of "embedded" topic
   - [ ] Index the data into elastic/solr/opensearch whatever

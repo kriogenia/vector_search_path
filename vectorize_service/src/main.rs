@@ -1,6 +1,4 @@
 use axum::{routing::get, Router};
-
-
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 
@@ -19,6 +17,7 @@ async fn main() {
     let (_handle, model) = model::Model::spawn();
 
     let app = Router::new()
+		.route("/ping", get(ping))
         .route(api::text::ENDPOINT, get(api::text::text))
         .with_state(model)
         .layer(
@@ -27,10 +26,14 @@ async fn main() {
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
         );
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000)); // TODO specify port on env
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000)); // TODO specify port on env
     tracing::info!("Listening on {addr}");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+async fn ping() -> &'static str {
+    "Pong"
 }

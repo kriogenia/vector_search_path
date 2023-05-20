@@ -1,12 +1,17 @@
-use std::{sync::mpsc, thread::{JoinHandle, self}};
 use anyhow::Result;
-use rust_bert::pipelines::sentence_embeddings::{SentenceEmbeddingsBuilder, SentenceEmbeddingsModelType};
+use rust_bert::pipelines::sentence_embeddings::{
+    SentenceEmbeddingsBuilder, SentenceEmbeddingsModelType,
+};
+use std::{
+    sync::mpsc,
+    thread::{self, JoinHandle},
+};
 use tokio::{sync::oneshot, task};
 
 /// Message type for internal channel, passing around texts and return value senders
 type Message = (String, oneshot::Sender<EncodedText>);
 /// Type of the text after the encoding
-type EncodedText = Vec<f32>; 
+type EncodedText = Vec<f32>;
 
 /// Manages the Sentence Embedding Model into a single thread to allow async requests
 #[derive(Debug, Clone)]
@@ -15,7 +20,6 @@ pub struct Model {
 }
 
 impl Model {
-
     /// Spawn a model on a separate thread and return an instance to interact with it
     pub fn spawn() -> (JoinHandle<Result<()>>, Model) {
         let (sender, receiver) = mpsc::sync_channel(100);
@@ -31,9 +35,9 @@ impl Model {
 
         while let Ok((text, sender)) = receiver.recv() {
             let encoded = {
-				let encoded = model.encode(&[text])?;
-				encoded[0].to_owned()
-			};
+                let encoded = model.encode(&[text])?;
+                encoded[0].to_owned()
+            };
             sender.send(encoded).expect("sending results");
         }
 
@@ -46,5 +50,4 @@ impl Model {
         task::block_in_place(|| self.sender.send((text, sender)))?;
         Ok(receiver.await?)
     }
-
 }
