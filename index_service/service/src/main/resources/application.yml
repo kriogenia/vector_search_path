@@ -2,3 +2,17 @@ server:
   port: 8080
   servlet:
     context-path: /index
+
+spring:
+  kafka:
+    bootstrap-servers:
+      - 127.0.0.1:9092
+    producer:
+      batch-size: 4092
+      compression-type: snappy
+
+index:
+  topic:
+    doc:
+      raw: index.doc.raw
+      vec: index.doc.vectorized

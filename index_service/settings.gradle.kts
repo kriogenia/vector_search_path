@@ -1,2 +1,4 @@
 rootProject.name = "index"
-include("api", "service")
+
+include("api")
+include("service")
