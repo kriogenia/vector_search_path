@@ -6,6 +6,7 @@ import dev.sotoestevez.index.response.PostDocsResponse
 import dev.sotoestevez.index.service.QueueService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,6 +22,11 @@ class DocsController(val queueService: QueueService<MovieDoc>) {
             return ResponseEntity(PostDocsResponse(true), HttpStatus.ACCEPTED)
         }
         return ResponseEntity(PostDocsResponse(false), HttpStatus.INTERNAL_SERVER_ERROR)
+    }
+
+    @GetMapping("/ping")
+    fun ping(): String {
+        return "pong"
     }
 
 }

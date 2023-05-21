@@ -15,7 +15,7 @@ import org.springframework.kafka.core.ProducerFactory
 
 @Configuration
 class KafkaConfig(
-    @Value("\${spring.kafka.bootstrap-servers[0]}") private val bootstrapAddress: String
+    @Value("\${INDEX_KAFKA_BOOTSTRAP_SERVER}") private val bootstrapAddress: String = "kafka:29092"
 ) {
 
     @Bean

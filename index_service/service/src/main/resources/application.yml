@@ -6,7 +6,7 @@ server:
 spring:
   kafka:
     bootstrap-servers:
-      - 127.0.0.1:9092
+      - kafka:9092
     producer:
       batch-size: 4092
       compression-type: snappy
